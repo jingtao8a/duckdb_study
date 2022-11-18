@@ -4,8 +4,12 @@
 #include <string>
 #include <stddef.h>
 #include <string.h>
+#include <stdio.h>
 
 #define BP_ORDER 50
+#define OFFSET_META 0
+#define OFFSET_BLOCK OFFSET_META + sizeof(meta_t)
+#define SIZE_NO_CHILDREN sizeof(leaf_node_t) - BP_ORDER * sizeof(record_t)
 
 namespace BPLUSTREE {
 
@@ -81,9 +85,38 @@ public:
     
 public:
     BplusTree(std::string path, bool forceEmpty=false);
+
+private:
+    void open_file(std::string mode = "rb+");
+    void close_file();
+    void init_from_empty();
+
+    //alloc from disk
+    off_t alloc(size_t size);
+    off_t alloc(leaf_node_t *leaf);
+    off_t alloc(internal_node_t *node);
+
+    //write block to disk
+    template<class T>
+    int unmap(T *block, off_t offset) {
+        return unmap(block, offset, sizeof(T));
+    }
+
+    int unmap(void *block, off_t offset, size_t size);
+
+    /* read block from disk */
+    template<class T>
+    int map(T *block, off_t offset) {
+        return map(block, offset, sizeof(T));
+    }
+
+    int BplusTree::map(void *block, off_t offset, size_t size);
+
 private:
     std::string m_path;
     meta_t m_meta;
+    FILE *m_fp;
+    int m_fpLevel;
 };
 
 }
