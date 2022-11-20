@@ -1,4 +1,5 @@
 /home/yuxintao/duckdb_study/build/CMakeFiles/testbplustree.dir
 /home/yuxintao/duckdb_study/build/CMakeFiles/testtexttable.dir
+/home/yuxintao/duckdb_study/build/CMakeFiles/main.dir
 /home/yuxintao/duckdb_study/build/CMakeFiles/edit_cache.dir
 /home/yuxintao/duckdb_study/build/CMakeFiles/rebuild_cache.dir

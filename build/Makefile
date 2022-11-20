@@ -142,12 +142,50 @@ testtexttable/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/testtexttable.dir/build.make CMakeFiles/testtexttable.dir/build
 .PHONY : testtexttable/fast
 
+#=============================================================================
+# Target rules for targets named main
+
+# Build rule for target.
+main: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 main
+.PHONY : main
+
+# fast build rule for target.
+main/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/build
+.PHONY : main/fast
+
+example/main.o: example/main.cpp.o
+.PHONY : example/main.o
+
+# target to build an object file
+example/main.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/example/main.cpp.o
+.PHONY : example/main.cpp.o
+
+example/main.i: example/main.cpp.i
+.PHONY : example/main.i
+
+# target to preprocess a source file
+example/main.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/example/main.cpp.i
+.PHONY : example/main.cpp.i
+
+example/main.s: example/main.cpp.s
+.PHONY : example/main.s
+
+# target to generate assembly for a file
+example/main.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/example/main.cpp.s
+.PHONY : example/main.cpp.s
+
 src/bplustree.o: src/bplustree.cpp.o
 .PHONY : src/bplustree.o
 
 # target to build an object file
 src/bplustree.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/testbplustree.dir/build.make CMakeFiles/testbplustree.dir/src/bplustree.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/src/bplustree.cpp.o
 .PHONY : src/bplustree.cpp.o
 
 src/bplustree.i: src/bplustree.cpp.i
@@ -156,6 +194,7 @@ src/bplustree.i: src/bplustree.cpp.i
 # target to preprocess a source file
 src/bplustree.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/testbplustree.dir/build.make CMakeFiles/testbplustree.dir/src/bplustree.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/src/bplustree.cpp.i
 .PHONY : src/bplustree.cpp.i
 
 src/bplustree.s: src/bplustree.cpp.s
@@ -164,7 +203,32 @@ src/bplustree.s: src/bplustree.cpp.s
 # target to generate assembly for a file
 src/bplustree.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/testbplustree.dir/build.make CMakeFiles/testbplustree.dir/src/bplustree.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/src/bplustree.cpp.s
 .PHONY : src/bplustree.cpp.s
+
+src/duckdbms.o: src/duckdbms.cpp.o
+.PHONY : src/duckdbms.o
+
+# target to build an object file
+src/duckdbms.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/src/duckdbms.cpp.o
+.PHONY : src/duckdbms.cpp.o
+
+src/duckdbms.i: src/duckdbms.cpp.i
+.PHONY : src/duckdbms.i
+
+# target to preprocess a source file
+src/duckdbms.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/src/duckdbms.cpp.i
+.PHONY : src/duckdbms.cpp.i
+
+src/duckdbms.s: src/duckdbms.cpp.s
+.PHONY : src/duckdbms.s
+
+# target to generate assembly for a file
+src/duckdbms.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/src/duckdbms.cpp.s
+.PHONY : src/duckdbms.cpp.s
 
 src/texttable.o: src/texttable.cpp.o
 .PHONY : src/texttable.o
@@ -172,6 +236,7 @@ src/texttable.o: src/texttable.cpp.o
 # target to build an object file
 src/texttable.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/testtexttable.dir/build.make CMakeFiles/testtexttable.dir/src/texttable.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/src/texttable.cpp.o
 .PHONY : src/texttable.cpp.o
 
 src/texttable.i: src/texttable.cpp.i
@@ -180,6 +245,7 @@ src/texttable.i: src/texttable.cpp.i
 # target to preprocess a source file
 src/texttable.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/testtexttable.dir/build.make CMakeFiles/testtexttable.dir/src/texttable.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/src/texttable.cpp.i
 .PHONY : src/texttable.cpp.i
 
 src/texttable.s: src/texttable.cpp.s
@@ -188,6 +254,7 @@ src/texttable.s: src/texttable.cpp.s
 # target to generate assembly for a file
 src/texttable.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/testtexttable.dir/build.make CMakeFiles/testtexttable.dir/src/texttable.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/src/texttable.cpp.s
 .PHONY : src/texttable.cpp.s
 
 test/testbplustree.o: test/testbplustree.cpp.o
@@ -246,11 +313,18 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... main"
 	@echo "... testbplustree"
 	@echo "... testtexttable"
+	@echo "... example/main.o"
+	@echo "... example/main.i"
+	@echo "... example/main.s"
 	@echo "... src/bplustree.o"
 	@echo "... src/bplustree.i"
 	@echo "... src/bplustree.s"
+	@echo "... src/duckdbms.o"
+	@echo "... src/duckdbms.i"
+	@echo "... src/duckdbms.s"
 	@echo "... src/texttable.o"
 	@echo "... src/texttable.i"
 	@echo "... src/texttable.s"
