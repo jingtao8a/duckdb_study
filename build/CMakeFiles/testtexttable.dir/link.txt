@@ -1,0 +1,1 @@
+/usr/bin/c++ -std=c++11 -g CMakeFiles/testtexttable.dir/test/testtexttable.cpp.o CMakeFiles/testtexttable.dir/src/texttable.cpp.o -o /home/yuxintao/duckdb_study/bin/testtexttable 

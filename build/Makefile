@@ -129,6 +129,19 @@ testbplustree/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/testbplustree.dir/build.make CMakeFiles/testbplustree.dir/build
 .PHONY : testbplustree/fast
 
+#=============================================================================
+# Target rules for targets named testtexttable
+
+# Build rule for target.
+testtexttable: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 testtexttable
+.PHONY : testtexttable
+
+# fast build rule for target.
+testtexttable/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/testtexttable.dir/build.make CMakeFiles/testtexttable.dir/build
+.PHONY : testtexttable/fast
+
 src/bplustree.o: src/bplustree.cpp.o
 .PHONY : src/bplustree.o
 
@@ -152,6 +165,30 @@ src/bplustree.s: src/bplustree.cpp.s
 src/bplustree.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/testbplustree.dir/build.make CMakeFiles/testbplustree.dir/src/bplustree.cpp.s
 .PHONY : src/bplustree.cpp.s
+
+src/texttable.o: src/texttable.cpp.o
+.PHONY : src/texttable.o
+
+# target to build an object file
+src/texttable.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/testtexttable.dir/build.make CMakeFiles/testtexttable.dir/src/texttable.cpp.o
+.PHONY : src/texttable.cpp.o
+
+src/texttable.i: src/texttable.cpp.i
+.PHONY : src/texttable.i
+
+# target to preprocess a source file
+src/texttable.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/testtexttable.dir/build.make CMakeFiles/testtexttable.dir/src/texttable.cpp.i
+.PHONY : src/texttable.cpp.i
+
+src/texttable.s: src/texttable.cpp.s
+.PHONY : src/texttable.s
+
+# target to generate assembly for a file
+src/texttable.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/testtexttable.dir/build.make CMakeFiles/testtexttable.dir/src/texttable.cpp.s
+.PHONY : src/texttable.cpp.s
 
 test/testbplustree.o: test/testbplustree.cpp.o
 .PHONY : test/testbplustree.o
@@ -177,6 +214,30 @@ test/testbplustree.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/testbplustree.dir/build.make CMakeFiles/testbplustree.dir/test/testbplustree.cpp.s
 .PHONY : test/testbplustree.cpp.s
 
+test/testtexttable.o: test/testtexttable.cpp.o
+.PHONY : test/testtexttable.o
+
+# target to build an object file
+test/testtexttable.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/testtexttable.dir/build.make CMakeFiles/testtexttable.dir/test/testtexttable.cpp.o
+.PHONY : test/testtexttable.cpp.o
+
+test/testtexttable.i: test/testtexttable.cpp.i
+.PHONY : test/testtexttable.i
+
+# target to preprocess a source file
+test/testtexttable.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/testtexttable.dir/build.make CMakeFiles/testtexttable.dir/test/testtexttable.cpp.i
+.PHONY : test/testtexttable.cpp.i
+
+test/testtexttable.s: test/testtexttable.cpp.s
+.PHONY : test/testtexttable.s
+
+# target to generate assembly for a file
+test/testtexttable.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/testtexttable.dir/build.make CMakeFiles/testtexttable.dir/test/testtexttable.cpp.s
+.PHONY : test/testtexttable.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -186,12 +247,19 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... testbplustree"
+	@echo "... testtexttable"
 	@echo "... src/bplustree.o"
 	@echo "... src/bplustree.i"
 	@echo "... src/bplustree.s"
+	@echo "... src/texttable.o"
+	@echo "... src/texttable.i"
+	@echo "... src/texttable.s"
 	@echo "... test/testbplustree.o"
 	@echo "... test/testbplustree.i"
 	@echo "... test/testbplustree.s"
+	@echo "... test/testtexttable.o"
+	@echo "... test/testtexttable.i"
+	@echo "... test/testtexttable.s"
 .PHONY : help
 
 
