@@ -27,12 +27,29 @@ static int keyCmp(const BplusTree::key_t& a, const BplusTree::key_t& b) {
 OPERATOR_KEYCMP(BplusTree::index_t);
 OPERATOR_KEYCMP(BplusTree::record_t);
 
-BplusTree::index_t *BplusTree::find(internal_node_t &node, const key_t& key) {
+
+template <class T>
+typename T::child_t begin(T &node) {
+    return node.children;
+}
+
+template <class T>
+typename T::child_t end(T &node) {
+    return node.children + node.n;
+}
+
+BplusTree::index_t *find(BplusTree::internal_node_t &node, const BplusTree::key_t& key) {
     return std::upper_bound(begin(node), end(node) - 1, key);
 }
 
-BplusTree::record_t *BplusTree::find(leaf_node_t &node, const key_t& key) {
+BplusTree::record_t *find(BplusTree::leaf_node_t &node, const BplusTree::key_t& key) {
     return std::lower_bound(begin(node), end(node), key);
+}
+
+
+BplusTree::key_t::key_t(const char *str) {
+    bzero(k, sizeof(k));
+    strcpy(k, str);
 }
 
 BplusTree::BplusTree(std::string path, bool forceEmpty) 
@@ -43,6 +60,7 @@ BplusTree::BplusTree(std::string path, bool forceEmpty)
         }
     }
     if (forceEmpty) {
+        //只有当强制更新或者本地文件没有数据时执行此段代码
         open_file("w+");
         init_from_empty();
         close_file();
@@ -56,24 +74,22 @@ void BplusTree::init_from_empty() {
     m_meta.key_size = sizeof(key_t);
     m_meta.height = 1;//B+树的高度为1
     m_meta.slot = OFFSET_BLOCK;
-
+    
 //init root node
     internal_node_t root;
     root.next = root.prev = root.parent = 0;
-    root.n = 0;
     m_meta.root_offset = alloc(&root);
 
 //init empty leaf
     leaf_node_t leaf;
     leaf.next = leaf.prev = 0;
-    leaf.n = 0;
     leaf.parent = m_meta.root_offset;
     m_meta.leaf_offset = root.children[0].child = alloc(&leaf);
 
 //save
     unmap(&m_meta, OFFSET_META);
     unmap(&root, m_meta.root_offset);
-    unmap(&leaf, root.children[0].child);
+    unmap(&leaf, m_meta.leaf_offset);
 }
 
 //查找
@@ -112,6 +128,59 @@ int BplusTree::search(const key_t& key, value_t *value) {
     }
     return -1;
 }
+
+int BplusTree::search_range(key_t *left, const key_t &right,
+                     value_t *values, size_t max, bool *next = NULL) {
+    if (left == NULL || keyCmp(*left, right) > 0)
+            return -1;
+
+    off_t off_left = search_leaf(*left);
+    off_t off_right = search_leaf(right);
+    off_t off = off_left;
+    size_t i = 0;
+    record_t *b, *e;
+
+    leaf_node_t leaf;
+    while (off != off_right && off != 0 && i < max) {
+        map(&leaf, off);
+
+        // start point
+        if (off_left == off) 
+            b = find(leaf, *left);
+        else
+            b = begin(leaf);
+
+        // copy
+        e = leaf.children + leaf.n;
+        for (; b != e && i < max; ++b, ++i)
+            values[i] = b->value;
+
+        off = leaf.next;
+    }
+
+    // the last leaf
+    if (i < max) {
+        map(&leaf, off_right);
+
+        b = find(leaf, *left);
+        e = std::upper_bound(begin(leaf), end(leaf), right);
+        for (; b != e && i < max; ++b, ++i)
+            values[i] = b->value;
+    }
+
+    // mark for next iteration
+    if (next != NULL) {
+        if (i == max && b != e) {
+            *next = true;
+            *left = b->key;
+        } else {
+            *next = false;
+        }
+    }
+
+    return i;
+}
+
 //插入
 void BplusTree::reset_index_children_parent(index_t *begin, index_t *end, off_t parent) {
     internal_node_t node;
@@ -127,14 +196,15 @@ void BplusTree::reset_index_children_parent(index_t *begin, index_t *end, off_t 
 void BplusTree::insert_key_to_index(off_t offset, const key_t &key, off_t old, off_t after) {
     if (offset == 0) {
         internal_node_t root;
+        m_meta.root_offset = alloc(&root);
+        m_meta.height++;//B+树高度加1
+
         root.n = 2;
         root.next = root.prev = root.parent = 0;
         root.children[0].key = key;
         root.children[0].child = old;
         root.children[1].child = after;
-
-        m_meta.root_offset = alloc(&root);
-        m_meta.height++;//B+树高度加1
+        
 
         unmap(&m_meta, OFFSET_META);
         unmap(&root, m_meta.root_offset);
@@ -163,7 +233,7 @@ void BplusTree::insert_key_to_index(off_t offset, const key_t &key, off_t old, o
         key_t middle_key = node.children[point].key;//这个key将不存在于node和new_node中了
 
         //split
-        std::copy(begin(node) + point + 1, end(node), end(new_node));
+        std::copy(begin(node) + point + 1, end(node), begin(new_node));
         new_node.n = node.n - point - 1;
         node.n = point + 1;
 
@@ -269,85 +339,113 @@ int BplusTree::insert(const key_t& key, value_t value) {
     return 0;
 }
 
-
-
 //删除
+template<class T>
+void BplusTree::node_remove(T *prev, T *node) {
+    unalloc(node, prev->next);
+    prev->next = node->next;
+    if (node->next != 0) {
+        T next;
+        map(&next, node->next, SIZE_NO_CHILDREN);
+        next.prev = node->prev;
+        unmap(&next, node->next, SIZE_NO_CHILDREN);
+    }
+    unmap(&m_meta, OFFSET_META);
+}
+
+
 bool BplusTree::borrow_key(bool from_right, internal_node_t &borrower, off_t offset) {
+    typedef typename internal_node_t::child_t child_t;
+
     off_t lender_off = from_right ? borrower.next : borrower.prev;
     internal_node_t lender;
     map(&lender, lender_off);
 
     assert(lender.n >= m_meta.order / 2);
-    if (lender.n != m_meta.order / 2) {//可以borrow
-        index_t *where_to_lend, *where_to_put;
+    if (lender.n != m_meta.order / 2) {
+        child_t where_to_lend, where_to_put;
+
         internal_node_t parent;
 
+        // swap keys, draw on paper to see why
         if (from_right) {
             where_to_lend = begin(lender);
             where_to_put = end(borrower);
 
             map(&parent, borrower.parent);
-            index_t *where = std::lower_bound(begin(parent), end(parent) - 1, (end(borrower) - 1)->key);
+            child_t where = std::lower_bound(begin(parent), end(parent) - 1,
+                                        (end(borrower) -1)->key);
             where->key = where_to_lend->key;
             unmap(&parent, borrower.parent);
         } else {
             where_to_lend = end(lender) - 1;
             where_to_put = begin(borrower);
-            
+
             map(&parent, lender.parent);
-            index_t *where = find(parent, begin(lender)->key);
+            child_t where = find(parent, begin(lender)->key);
             where_to_put->key = where->key;
             where->key = (where_to_lend - 1)->key;
             unmap(&parent, lender.parent);
         }
-        //store
+
+        // store
         std::copy_backward(where_to_put, end(borrower), end(borrower) + 1);
         *where_to_put = *where_to_lend;
         borrower.n++;
-        
-        //erase
+
+        // erase
         reset_index_children_parent(where_to_lend, where_to_lend + 1, offset);
         std::copy(where_to_lend + 1, end(lender), where_to_lend);
         lender.n--;
         unmap(&lender, lender_off);
         return true;
     }
+
     return false;
 }
 
 void BplusTree::remove_from_index(off_t offset, internal_node_t &node, const key_t &key) {
-    size_t min_n = m_meta.root_offset == offset ? 1 : m_meta.order / 2;//如果是根节点，一个node的最小key的数量为1，如果是其它node为 度 / 2
+    size_t min_n = m_meta.root_offset == offset ? 1 : m_meta.order / 2;
     assert(node.n >= min_n && node.n <= m_meta.order);
 
-    //remove key
+    // remove key
     key_t index_key = begin(node)->key;
-
     index_t *to_delete = find(node, key);
-    (to_delete + 1)->child = to_delete->child;
-    std::copy(to_delete + 1, end(node), to_delete);
+    if (to_delete != end(node)) {
+        (to_delete + 1)->child = to_delete->child;
+        std::copy(to_delete + 1, end(node), to_delete);
+    }
     node.n--;
 
-    if (node.n == 1 && m_meta.root_offset == offset && m_meta.internal_node_num != 1) {//这个node就是root,并且这个node已经空了
+    // remove to only one key
+    if (node.n == 1 && m_meta.root_offset == offset &&
+                       m_meta.internal_node_num != 1)
+    {
         unalloc(&node, m_meta.root_offset);
         m_meta.height--;
-        m_meta.root_offset = begin(node)->child;
+        m_meta.root_offset = node.children[0].child;
         unmap(&m_meta, OFFSET_META);
         return;
     }
 
-    //merge or borrow
+    // merge or borrow
     if (node.n < min_n) {
         internal_node_t parent;
         map(&parent, node.parent);
-        bool borrowed = false;
-        if (offset != begin(parent)->child) {
-            borrowed = borrow_key(false, node, offset);
-        }
-        if (!borrowed && offset != (end(parent) - 1)->child) {
-            borrowed = borrow_key(true, node, offset);
-        }
 
+        // first borrow from left
+        bool borrowed = false;
+        if (offset != begin(parent)->child)
+            borrowed = borrow_key(false, node, offset);
+
+        // then borrow from right
+        if (!borrowed && offset != (end(parent) - 1)->child)
+            borrowed = borrow_key(true, node, offset);
+
+        // finally we merge
         if (!borrowed) {
+            assert(node.next != 0 || node.prev != 0);
+
             if (offset == (end(parent) - 1)->child) {
                 // if leaf is last element then merge | prev | leaf |
                 assert(node.prev != 0);
@@ -371,6 +469,9 @@ void BplusTree::remove_from_index(off_t offset, internal_node_t &node, const key
                 merge_keys(node, next);
                 unmap(&node, offset);
             }
+
+            // remove parent's key
+            remove_from_index(node.parent, parent, index_key);
         } else {
             unmap(&node, offset);
         }
@@ -424,19 +525,6 @@ void BplusTree::change_parent_child(off_t parent, const key_t& o, const key_t& n
     }
 }
 
-template<class T>
-void BplusTree::node_remove(T *prev, T *node) {
-    unalloc(node, prev->next);
-    prev->next = node->next;
-    if (node->next != 0) {
-        T next;
-        map(&next, node->next, SIZE_NO_CHILDREN);
-        next.prev = node->prev;
-        unmap(&next, node->next, SIZE_NO_CHILDREN);
-    }
-    unmap(&m_meta, OFFSET_META);
-}
-
 int BplusTree::remove(const key_t& key) {
     internal_node_t parent;
     leaf_node_t leaf;
@@ -453,7 +541,7 @@ int BplusTree::remove(const key_t& key) {
     if (!std::binary_search(begin(leaf), end(leaf), key)) {//不存在这个key值
         return -1;
     }
-    size_t min_n = m_meta.leaf_node_num == 1 ? 0 : m_meta.order / 2;
+    size_t min_n = m_meta.leaf_node_num == 1 ? 0 : m_meta.order / 2;//如果leaf_node_num只有一个，min_n 等于 0
     assert(leaf.n >= min_n && leaf.n <= m_meta.order);
 
     
@@ -464,6 +552,7 @@ int BplusTree::remove(const key_t& key) {
 
     //merge or borrow
     if (leaf.n < min_n) {
+        //borrow
         bool borrowed = false;
         if (leaf.prev != 0) {
             borrowed = borrow_key(false, leaf);
@@ -472,7 +561,7 @@ int BplusTree::remove(const key_t& key) {
         if (!borrowed && leaf.next != 0) {
             borrowed = borrow_key(true, leaf);
         }
-
+        //merge
         if (!borrowed) {
             key_t index_key;
             if (where == end(parent) - 1) {
@@ -483,7 +572,6 @@ int BplusTree::remove(const key_t& key) {
                 index_key = begin(prev)->key;
 
                 merge_leafs(&prev, &leaf);
-                node_remove(&prev, &leaf);
                 unmap(&prev, leaf.prev);
             } else {
                 // else merge | leaf | next |
@@ -493,7 +581,6 @@ int BplusTree::remove(const key_t& key) {
                 index_key = begin(leaf)->key;
 
                 merge_leafs(&leaf, &next);
-                node_remove(&leaf, &next);
                 unmap(&leaf, offset);
             }
 
@@ -512,6 +599,7 @@ int BplusTree::remove(const key_t& key) {
 void BplusTree::merge_leafs(leaf_node_t *left, leaf_node_t *right) {
     std::copy(begin(*right), end(*right), end(*left));
     left->n += right->n;
+    node_remove(left, right);
 }
 
 void BplusTree::merge_keys(internal_node_t &node, internal_node_t &next) {
@@ -520,6 +608,26 @@ void BplusTree::merge_keys(internal_node_t &node, internal_node_t &next) {
     node_remove(&node, &next);
 }
 
+//修改
+int BplusTree::update(const key_t& key, value_t value)
+{
+    off_t offset = search_leaf(key);
+    leaf_node_t leaf;
+    map(&leaf, offset);
+
+    record_t *record = find(leaf, key);
+    if (record != leaf.children + leaf.n)
+        if (keyCmp(key, record->key) == 0) {
+            record->value = value;
+            unmap(&leaf, offset);
+
+            return 0;
+        } else {
+            return 1;
+        }
+    else
+        return -1;
+}
 
 void BplusTree::open_file(std::string mode) {
     if (m_fpLevel == 0) {

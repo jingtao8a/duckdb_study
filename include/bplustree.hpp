@@ -34,16 +34,11 @@ public:
         char email[256];
     };
 
-    struct index_t;
-    struct record_t;
-
     struct key_t {
         char k[16];
-        key_t(const char *str = "") {
-            bzero(k, sizeof(k));
-            strcpy(k, str);
-        }
+        key_t(const char *str = "");
     };
+    
     struct index_t{ 
         key_t key;
         off_t child;
@@ -71,19 +66,23 @@ public:
         size_t n;
         record_t children[BP_ORDER];
     };
-
 public:
     BplusTree(std::string path, bool forceEmpty=false);
     meta_t getMeta() { return m_meta; }
 
+    int search_range(key_t *left, const key_t &right,
+                     value_t *values, size_t max, bool *next = NULL);//返回-1失败，否则成功
+    int search(const key_t& key, value_t *value);//返回0时查找成功，非0为失败
+    int remove(const key_t& key);//返回0时删除成功，非0为失败
+    int insert(const key_t& key, value_t value);//返回0时插入成功，非0为失败
+    int update(const key_t& key, value_t value);
+private:
     //查找
     /* find index */
     off_t search_index(const key_t &key);
     /* find leaf */
     off_t search_leaf(off_t index, const key_t& key);
     off_t search_leaf(const key_t& key);
-    
-    int search(const key_t& key, value_t *value);
     
     //插入
     /* insert into leaf without split */
@@ -98,8 +97,6 @@ public:
     /* add key to the internal node */
     void insert_key_to_index(off_t offset, const key_t &key, off_t old, off_t after);
     void insert_key_to_index_no_split(internal_node_t &node, const key_t &key, off_t value);
-
-    int insert(const key_t& key, value_t value);
     
     //删除
     void remove_from_index(off_t offset, internal_node_t &node, const key_t &key);
@@ -115,55 +112,33 @@ public:
 
     template<class T>
     void node_remove(T *prev, T *node);
-
-    int remove(const key_t& key);
     
     void merge_leafs(leaf_node_t *left, leaf_node_t *right);
 
     void merge_keys(internal_node_t &node, internal_node_t &next);
 private:
-    template <class T>
-    static typename T::child_t begin(T &node) {
-        return node.children;
-    }
-
-    template <class T>
-    static typename T::child_t end(T &node) {
-        return node.children + node.n;
-    }
-
-    static index_t *find(internal_node_t &node, const key_t& key);
-    static record_t *find(leaf_node_t &node, const key_t& key);
-private:
     void open_file(std::string mode = "rb+");
     void close_file();
     void init_from_empty();
-
     //alloc from disk
     off_t alloc(size_t size);
     off_t alloc(leaf_node_t *leaf);
     off_t alloc(internal_node_t *node);
-
     //unalloc
     void unalloc(leaf_node_t *leaf, off_t offset);
     void unalloc(internal_node_t *node, off_t offset);
-
     //write block to disk
     template<class T>
     int unmap(T *block, off_t offset) {
         return unmap(block, offset, sizeof(T));
     }
-
-    int unmap(void *block, off_t offset, size_t size);
-
+    int unmap(void *block, off_t offset, size_t size);//返回0代表成功，非0代表失败
     /* read block from disk */
     template<class T>
     int map(T *block, off_t offset) {
         return map(block, offset, sizeof(T));
     }
-
-    int map(void *block, off_t offset, size_t size);
-
+    int map(void *block, off_t offset, size_t size);//返回0代表成功，非0代表失败
 
 private:
     std::string m_path;
