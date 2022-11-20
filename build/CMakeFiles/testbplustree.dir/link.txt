@@ -1,0 +1,1 @@
+/usr/bin/c++ -std=c++11 -g CMakeFiles/testbplustree.dir/test/testbplustree.cpp.o CMakeFiles/testbplustree.dir/src/bplustree.cpp.o -o /home/yuxintao/duckdb_study/bin/testbplustree 

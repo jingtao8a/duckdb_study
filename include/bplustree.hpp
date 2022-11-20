@@ -34,33 +34,19 @@ public:
         char email[256];
     };
 
+    struct index_t;
+    struct record_t;
+
     struct key_t {
         char k[16];
         key_t(const char *str = "") {
             bzero(k, sizeof(k));
             strcpy(k, str);
         }
-        
-        bool operator<(const key_t& rhs) {
-            return BplusTree::keyCmp(*this, rhs) < 0;
-        }
-        
-        bool operator==(const key_t& rhs) {
-            return BplusTree::keyCmp(*this, rhs) == 0;
-        }
-        
     };
-
     struct index_t{ 
         key_t key;
         off_t child;
-        bool operator<(const key_t& rhs) {
-            return BplusTree::keyCmp(key, rhs) < 0;
-        }
-        
-        bool operator==(const key_t& rhs) {
-            return BplusTree::keyCmp(key, rhs) == 0;
-        }
     };
 
     struct internal_node_t{
@@ -75,13 +61,6 @@ public:
     struct record_t {
         key_t key;
         value_t value;
-        bool operator<(const key_t& rhs) {
-            return BplusTree::keyCmp(key, rhs) < 0;
-        }
-        
-        bool operator==(const key_t& rhs) {
-            return BplusTree::keyCmp(key, rhs) == 0;
-        }
     };
 
     struct leaf_node_t {
@@ -139,6 +118,9 @@ public:
 
     int remove(const key_t& key);
     
+    void merge_leafs(leaf_node_t *left, leaf_node_t *right);
+
+    void merge_keys(internal_node_t &node, internal_node_t &next);
 private:
     template <class T>
     static typename T::child_t begin(T &node) {
@@ -150,19 +132,8 @@ private:
         return node.children + node.n;
     }
 
-    static index_t *find(internal_node_t &node, const key_t& key) {
-        return std::upper_bound(begin(node), end(node) - 1, key);
-    }
-
-    static record_t *find(leaf_node_t &node, const key_t& key) {
-        return std::lower_bound(begin(node), end(node), key);
-    }
-
-    //正:a > b     0:a == b    负:a < b
-    static int keyCmp(const key_t& a, const key_t& b) {
-        int x = strlen(a.k) - strlen(b.k);
-        return x == 0 ? strcmp(a.k, b.k) : x;
-    }
+    static index_t *find(internal_node_t &node, const key_t& key);
+    static record_t *find(leaf_node_t &node, const key_t& key);
 private:
     void open_file(std::string mode = "rb+");
     void close_file();
